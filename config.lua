@@ -1,9 +1,10 @@
 Config = {}
+Config.OX = false
 
 Config.Gangs = {
-    ["Biker"] = {
+    ["biker"] = {
         ["Armory"] = {
-            vector3(0,0,0)
+            vector3(1401.3159, 1132.2335, 113.3337)
         }
     }
 }

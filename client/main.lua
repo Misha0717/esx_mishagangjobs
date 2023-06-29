@@ -7,6 +7,8 @@ Citizen.CreateThread(function()
     end
 
     PlayerData = ESX.GetPlayerData()
+    Wait(1000)
+    StartGangMarkers()
 end)
 
 RegisterNetEvent("esx:playerLoaded", function(Player)
@@ -34,19 +36,21 @@ function StartGangMarkers()
         local coords    = GetEntityCoords(ped)
         
         for k,v in pairs(Config.Gangs[CurrentGang]) do
-            local dist = #(coords - v)
-
-            if dist < 15 then
-                sleep = 0
-
-                DrawMarker(2, v, 0, 0, 0, 0, 0, 0, 0.3, 0.3, 0.3, 0, 0, 255, 200, true, true, false, true)
-
-                if dist < 2.0 then
-                    if IsControlJustPressed(0, 38) then
-                        OpenMenuHandler(k)
+            for i=1, #Config.Gangs[CurrentGang][k] do
+                local dist = #(coords - Config.Gangs[CurrentGang][k][i])
+                if dist < 15 then
+                    sleep = 0
+    
+                    DrawMarker(1, Config.Gangs[CurrentGang][k][i], 0, 0, 0, 0, 0, 0, 1.5, 1.5, 1.0, 0, 0, 255, 200, false, false, false, true)
+    
+                    if dist < 2.0 then
+                        ESX.ShowHelpNotification("Press ~INPUT_CONTEXT~ to open menu "..k, thisFrame, bepp, duration)
+                        if IsControlJustPressed(0, 38) then
+                            OpenMenuHandler(k)
+                        end
                     end
+    
                 end
-
             end
         end
 

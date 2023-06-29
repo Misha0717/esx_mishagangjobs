@@ -10,3 +10,8 @@ server_scripts {
     "server/*.lua",
     "config.lua"
 }
+
+shared_scripts {
+    "@es_extended/imports.lua",
+    '@oxmysql/lib/MySQL.lua',
+}
