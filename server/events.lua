@@ -98,3 +98,41 @@ RegisterServerEvent("esx_mishagangjobs:TakeItemFromArmory", function(Gang, item,
 
     TriggerClientEvent("esx:showNotification", source, ("You taked ~y~%sx~b~ %s~w~ from your gang armory."):format(count, item))
 end)
+
+RegisterServerEvent("esx_mishagangjobs:BuyItemFromShop", function(Gang, item, count)
+    local source = source
+    local xPlayer = ESX.GetPlayerFromId(source)
+
+    if not Config.Gangs[xPlayer.getJob().name] then
+        print(("^3[esx_mishagangjobs:BuyItemFromShop] ^8[CheatFlag]^0 %s(%s): Tried to buy item from armory with job %s!"):format(
+            GetPlayerName(source), GetPlayerIdentifier(source, 0), xPlayer.getJob().name
+        ))
+        DropPlayer(source, "esx_mishagangjobs:BuyItemFromShop: "..GetPlayerName(source).." Tried to exploit the armory!")
+        return
+    end
+
+    local NearMarker,Dist = NearMarker(source, "Armory", 10)
+    if not NearMarker then
+        print(("^3[esx_mishagangjobs:BuyItemFromShop] ^8[CheatFlag]^0 %s(%s): Tried to buy item from armory while %.2f meters away from marker!"):format(
+            GetPlayerName(source), GetPlayerIdentifier(source, 0), Dist
+        ))
+        DropPlayer(source, "esx_mishagangjobs:BuyItemFromShop: "..GetPlayerName(source).." Tried to exploit the armory!")
+        return
+    end
+
+    if not Config.ItemShop[item] then
+        print(("^3[esx_mishagangjobs:BuyItemFromShop] ^8[CheatFlag]^0 %s(%s): Tried to buy a invalid item(%s) from armory!"):format(
+            GetPlayerName(source), GetPlayerIdentifier(source, 0), Dist
+        ))
+        DropPlayer(source, "esx_mishagangjobs:BuyItemFromShop: "..GetPlayerName(source).." Tried to exploit the armory!")
+        return
+    end
+
+    local price = Config.ItemShop[item].price*count
+    if xPlayer.getAccount('money').money >= price then
+        xPlayer.removeAccountMoney('money', price)
+        xPlayer.addInventoryItem(item, count)
+    else
+        TriggerClientEvent("esx:showNotification", source, "You cant buy this item!")
+    end
+end)

@@ -33,8 +33,8 @@ function OpenArmory()
                 OpenTakeItemFromArmoryMenu()
             elseif selectedMenu == "put_item" then
                 OpenPutItemFromArmoryMenu()
-            elseif selectedMenu == "but_item" then
-
+            elseif selectedMenu == "buy_item" then
+                OpenBuyItemMenu()
             elseif selectedMenu == "buy_weapons" then
 
             end
@@ -63,7 +63,7 @@ function OpenTakeItemFromArmoryMenu()
     end
 
     ESX.UI.Menu.Open("default", GetCurrentResourceName(), "take_item", {
-        title = "Armory",
+        title = "Take Item",
         align = "top-right",
         elements = elements
     }, function(data, menu)
@@ -90,7 +90,6 @@ function OpenPutItemFromArmoryMenu()
     local PlayerInventory = PromiseCb("esx_mishagangjobs:GetPlayerInventory")
     local elements = {}
 
-    print(json.encode(PlayerInventory))
     for k,v in pairs(PlayerInventory) do
         table.insert(elements, {
             label = ("%sx - %s"):format(v, k),
@@ -106,7 +105,7 @@ function OpenPutItemFromArmoryMenu()
     end
 
     ESX.UI.Menu.Open("default", GetCurrentResourceName(), "take_item", {
-        title = "Armory",
+        title = "Put Item",
         align = "top-right",
         elements = elements
     }, function(data, menu)
@@ -148,4 +147,45 @@ function PromiseCb(CallbackName, ...)
     end
 
     return result
+end
+
+function OpenBuyItemMenu()
+    local elements = {}
+
+    for k,v in pairs(Config.ItemShop) do
+        table.insert(elements, {
+            label = ("<span style='color:green;'>€%s</span> - %s"):format(v.price, v.label),
+            item = k,
+            price = v.price
+        })
+    end
+
+    if not next(elements) then
+        table.insert(elements, {
+            label = "You cant buy items in your shop!",
+        })
+    end
+
+    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "take_item", {
+        title = "Buy Item",
+        align = "top-right",
+        elements = elements
+    }, function(data, menu)
+        if data.current.item then
+            ESX.UI.Menu.Open("dialog", GetCurrentResourceName(), "take_item_dialog", {
+                title = "Amount"
+            }, function(data2, menu2)
+                local Amount = data2.value
+                if Amount then
+                    TriggerServerEvent("esx_mishagangjobs:BuyItemFromShop", CurrentGang, data.current.item, Amount)
+                    menu2.close()
+                    menu.close()
+                end
+            end, function(data2, menu2)
+                menu2.close()
+            end)
+        end
+    end, function(data, menu)
+        menu.close()
+    end)
 end

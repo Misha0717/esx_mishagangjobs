@@ -1,5 +1,8 @@
 Config = {}
 Config.OX = false
+Config.ItemShop = {
+    lockpick = { price = 1000, label = "LockPicks" }
+}
 
 Config.Gangs = {
     ["biker"] = {
