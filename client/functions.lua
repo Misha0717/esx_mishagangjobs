@@ -13,13 +13,35 @@ function OpenMenuHandler(Action)
     end
 end
 
+function PromiseCb(CallbackName, ...)
+    local p = promise.new()
+
+    ESX.TriggerServerCallback(CallbackName, function(...)
+        p:resolve(...)
+    end, ...)
+
+    SetTimeout(2000,  function()
+        p:resolve(false)
+    end)
+
+    local result = Citizen.Await(p)
+
+    if not result then
+        print("^3[esx_MishaGangJobs] ^9[Error]^0 "..CallbackName.." timed-out!")
+        return result
+    end
+
+    return result
+end
+
 function OpenArmory()
     if not Config.OX then
         local elements = {
             { label = "Take item from armory", value = "take_item" },
             { label = "Put item in armory", value = "put_item" },
             { label = "Buy Items", value = "buy_item" },
-            { label = "Buy Weapons", value = "buy_weapons" }
+            { label = "Buy Weapons", value = "buy_weapons" },
+            { label = "Buy Weapon Attachments", value = "buy_weapon_attachments" }
         }
 
         ESX.UI.Menu.Open("default", GetCurrentResourceName(), "open_armory", {
@@ -37,6 +59,8 @@ function OpenArmory()
                 OpenBuyItemMenu()
             elseif selectedMenu == "buy_weapons" then
                 OpenBuyWeaponMenu()
+            elseif selectedMenu == "buy_weapon_attachments" then
+                OpenBuyWeaponAttachmentsMenu()
             end
         end, function(data, menu)
             menu.close()
@@ -104,13 +128,13 @@ function OpenPutItemFromArmoryMenu()
         })
     end
 
-    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "take_item", {
+    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "put_item", {
         title = "Put Item",
         align = "top-right",
         elements = elements
     }, function(data, menu)
         if data.current.item then
-            ESX.UI.Menu.Open("dialog", GetCurrentResourceName(), "take_item_dialog", {
+            ESX.UI.Menu.Open("dialog", GetCurrentResourceName(), "put_item_dialog", {
                 title = "Amount"
             }, function(data2, menu2)
                 local Amount = data2.value
@@ -126,27 +150,6 @@ function OpenPutItemFromArmoryMenu()
     end, function(data, menu)
         menu.close()
     end)
-end
-
-function PromiseCb(CallbackName, ...)
-    local p = promise.new()
-
-    ESX.TriggerServerCallback(CallbackName, function(...)
-        p:resolve(...)
-    end, ...)
-
-    SetTimeout(2000,  function()
-        p:resolve(false)
-    end)
-
-    local result = Citizen.Await(p)
-
-    if not result then
-        print("^3[esx_MishaGangJobs] ^9[Error]^0 "..CallbackName.." timed-out!")
-        return result
-    end
-
-    return result
 end
 
 function OpenBuyItemMenu()
@@ -166,13 +169,13 @@ function OpenBuyItemMenu()
         })
     end
 
-    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "take_item", {
+    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "buy_item", {
         title = "Buy Item",
         align = "top-right",
         elements = elements
     }, function(data, menu)
         if data.current.item then
-            ESX.UI.Menu.Open("dialog", GetCurrentResourceName(), "take_item_dialog", {
+            ESX.UI.Menu.Open("dialog", GetCurrentResourceName(), "buy_item_dialog", {
                 title = "Amount"
             }, function(data2, menu2)
                 local Amount = data2.value
@@ -193,7 +196,6 @@ end
 function OpenBuyWeaponMenu()
     local elements = {}
 
-    print(PlayerData.job.grade)
     for k,v in pairs(Config.Weapons[CurrentGang][PlayerData.job.grade]) do
         table.insert(elements, {
             label = ("<span style='color:green;'>€%s</span> - %s"):format(v, ESX.GetWeaponLabel(k)),
@@ -204,7 +206,7 @@ function OpenBuyWeaponMenu()
 
     if not next(elements) then
         table.insert(elements, {
-            label = "You cant buy items in your shop!",
+            label = "You cant buy weapons in your shop!",
         })
     end
 
@@ -212,7 +214,7 @@ function OpenBuyWeaponMenu()
         return a.price < b.price
     end)
 
-    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "take_item", {
+    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "buy_weapon", {
         title = "Buy Item",
         align = "top-right",
         elements = elements
@@ -223,4 +225,90 @@ function OpenBuyWeaponMenu()
     end, function(data, menu)
         menu.close()
     end)
+end
+
+function OpenBuyWeaponAttachmentsMenu()
+    local elements = {}
+    local ped = PlayerPedId()
+
+    for k,v in pairs(Config.Weapons[PlayerData.job.name][PlayerData.job.grade]) do
+        if HasPedGotWeapon(ped, GetHashKey(k), false) then
+            table.insert(elements, {
+                label = ESX.GetWeaponLabel(k),
+                weapon = k
+            })
+        end
+    end
+
+    if not next(elements) then
+        table.insert(elements, {
+            label = "You cant add attachments to your weapons!",
+        })
+    end
+
+    table.sort(elements, function(a, b)
+        return a.label < b.label
+    end)
+
+    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "buy_weapon_attachment", {
+        title = "Buy Weapon Attachments",
+        align = "top-right",
+        elements = elements
+    }, function(data, menu)
+        local Weapon = data.current.weapon
+        if Weapon then
+            OpenSelectWeaponAttachmentMenu(Weapon)
+        end
+    end, function(data, menu)
+        menu.close()
+    end)
+end
+
+function OpenSelectWeaponAttachmentMenu(weapon)
+    local elements = {}
+    local ComponentsFromWeapon = GetComponentsFromWeapon(weapon)
+    local WeaponPrice = Config.Weapons[PlayerData.job.name][PlayerData.job.grade][weapon]
+
+    for k,v in ipairs(ComponentsFromWeapon) do
+        local price = WeaponPrice*Config.WeaponAttachmentMultiplier[weapon][v.name]
+        if not HasPedGotWeaponComponent(PlayerPedId(), GetHashKey(weapon), v.hash) then
+            print(v.name)
+            table.insert(elements, {
+                label = ("<span style='color:green;'>€%s</span> - %s"):format(math.floor(price), v.label),
+                name = v.name,
+                hash = v.hash,
+                price = price
+            })
+        else
+            table.insert(elements, {
+                label = ("<span style='color:green;'>equipped</span> - %s"):format(v.label),
+            })
+        end
+    end
+
+    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "take_item", {
+        title = "Buy Weapon Attachments",
+        align = "top-right",
+        elements = elements
+    }, function(data, menu)
+        if data.current.name then
+            if not HasPedGotWeaponComponent(PlayerPedId(), GetHashKey(weapon), data.current.hash) then
+                TriggerServerEvent("esx_mishagangjobs:BuyWeaponAttachment", CurrentGang, weapon, data.current.name)
+                menu.close()
+            else
+                ESX.ShowNotification("You ~r~already~w~ have this weapon attachment!")
+            end
+        end
+    end, function(data, menu)
+        menu.close()
+    end)
+end
+
+function GetComponentsFromWeapon(weapon)
+    local WeaponList = ESX.GetWeaponList()
+    for k,v in ipairs(WeaponList) do
+        if v.name == weapon then
+            return v.components
+        end
+    end
 end

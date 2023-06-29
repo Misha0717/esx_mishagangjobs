@@ -180,3 +180,47 @@ RegisterServerEvent("esx_mishagangjobs:BuyWeaponFromArmory", function(gang, Weap
         TriggerClientEvent("esx:showNotification", source, "You cant buy this weapon!")
     end
 end)
+
+RegisterServerEvent("esx_mishagangjobs:BuyWeaponAttachment", function(gang, Weapon, Component)
+    local source = source
+    local xPlayer = ESX.GetPlayerFromId(source)
+
+    if not Config.Weapons[xPlayer.getJob().name] then
+        print(("^3[esx_mishagangjobs:BuyWeaponAttachment] ^8[CheatFlag]^0 %s(%s): Tried to buy weaponcomponent from armory with job %s!"):format(
+            GetPlayerName(source), GetPlayerIdentifier(source, 0), xPlayer.getJob().name
+        ))
+        DropPlayer(source, "esx_mishagangjobs:BuyWeaponAttachment: "..GetPlayerName(source).." Tried to exploit the armory!")
+        return
+    end
+
+    local NearMarker,Dist = NearMarker(source, "Armory", 10)
+    if not NearMarker then
+        print(("^3[esx_mishagangjobs:BuyWeaponAttachment] ^8[CheatFlag]^0 %s(%s): Tried to buy weaponcomponent from armory while %.2f meters away from marker!"):format(
+            GetPlayerName(source), GetPlayerIdentifier(source, 0), Dist
+        ))
+        DropPlayer(source, "esx_mishagangjobs:BuyWeaponAttachment: "..GetPlayerName(source).." Tried to exploit the armory!")
+        return
+    end
+
+    local WeaponData = Config.Weapons[xPlayer.getJob().name][xPlayer.getJob().grade][Weapon]
+    if not WeaponData then
+        print(("^3[esx_mishagangjobs:BuyWeaponAttachment] ^8[CheatFlag]^0 %s(%s): Tried to buy weaponcomponent from armory while weapon(%s) is not in the shop!"):format(
+            GetPlayerName(source), GetPlayerIdentifier(source, 0), Weapon
+        ))
+        DropPlayer(source, "esx_mishagangjobs:BuyWeaponAttachment: "..GetPlayerName(source).." Tried to exploit the armory!")
+        return
+    end
+
+    local price = WeaponData*Config.WeaponAttachmentMultiplier[Weapon][Component]
+    if xPlayer.getAccount('money').money >= price then
+        if not xPlayer.hasWeapon(Weapon) then
+            TriggerClientEvent("esx:showNotification", source, "You dont have this weapon!")
+            return
+        end
+
+        xPlayer.removeAccountMoney('money', price)
+        xPlayer.addWeaponComponent(Weapon, Component)
+    else
+        TriggerClientEvent("esx:showNotification", source, "You cant buy this weapon!")
+    end
+end)

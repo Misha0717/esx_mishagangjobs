@@ -26,3 +26,13 @@ Config.Weapons = {
         }
     }
 }
+
+Config.WeaponAttachmentMultiplier = {
+    ["WEAPON_PISTOL"] = {
+        clip_default = 0,
+        clip_extended = 0.5,
+        flashlight = 0.3,
+        suppressor = 0.4,
+        luxary_finish = 0.7
+    }
+}
