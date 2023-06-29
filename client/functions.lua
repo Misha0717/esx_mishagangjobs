@@ -39,6 +39,8 @@ function OpenArmory()
         local elements = {
             { label = "Take item from armory", value = "take_item" },
             { label = "Put item in armory", value = "put_item" },
+            { label = "Take weapon from armory", value = "take_weapon" },
+            { label = "Put weapon in armory", value = "put_weapon" },
             { label = "Buy Items", value = "buy_item" },
             { label = "Buy Weapons", value = "buy_weapons" },
             { label = "Buy Weapon Attachments", value = "buy_weapon_attachments" }
@@ -55,6 +57,10 @@ function OpenArmory()
                 OpenTakeItemFromArmoryMenu()
             elseif selectedMenu == "put_item" then
                 OpenPutItemFromArmoryMenu()
+            elseif selectedMenu == "take_weapon" then
+                OpenTakeWeaponFromArmoryMenu()
+            elseif selectedMenu == "put_weapon" then
+                OpenPutWeaponFromArmoryMenu()
             elseif selectedMenu == "buy_item" then
                 OpenBuyItemMenu()
             elseif selectedMenu == "buy_weapons" then
@@ -146,6 +152,65 @@ function OpenPutItemFromArmoryMenu()
             end, function(data2, menu2)
                 menu2.close()
             end)
+        end
+    end, function(data, menu)
+        menu.close()
+    end)
+end
+
+function OpenTakeWeaponFromArmoryMenu()
+    local WeaponsInArmory = PromiseCb("esx_mishagangjobs:GetWeaponsInArmory")
+    local elements = {}
+
+    for k,v in pairs(WeaponsInArmory) do
+        table.insert(elements, {
+            label = ESX.GetWeaponLabel(v.weapon),
+            weapon = v.weapon,
+            ammo = v.ammo,
+            components = v.components
+        })
+    end
+    
+    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "take_weapon", {
+        title = "Take Weapon",
+        align = "top-right",
+        elements = elements
+    }, function(data, menu)
+        if data.current.weapon then
+            if not HasPedGotWeapon(PlayerPedId(), GetHashKey(data.current.weapon), false) then
+                TriggerServerEvent("esx_mishagangjobs:TakeWeaponFromArmory", data.current.weapon, data.current.ammo, data.current.components)
+                menu.close()
+            else
+                ESX.ShowNotification("You ~r~already~w~ have this weapon!")
+            end
+        end
+    end, function(data, menu)
+        menu.close()
+    end)
+end
+
+function OpenPutWeaponFromArmoryMenu()
+    local elements = {}
+    local WeaponList = ESX.GetWeaponList()
+    local ped = PlayerPedId()
+
+    for k,v in ipairs(WeaponList) do
+        if HasPedGotWeapon(ped, GetHashKey(v.name), false) then
+            table.insert(elements, {
+                label = ESX.GetWeaponLabel(v.name),
+                weapon = v.name
+            })
+        end
+    end
+
+    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "put_weapon", {
+        title = "Put Weapon",
+        align = "top-right",
+        elements = elements
+    }, function(data, menu)
+        if data.current.weapon then
+            TriggerServerEvent("esx_mishagangjobs:PutWeaponToArmory", data.current.weapon)
+            menu.close()
         end
     end, function(data, menu)
         menu.close()
@@ -272,7 +337,6 @@ function OpenSelectWeaponAttachmentMenu(weapon)
     for k,v in ipairs(ComponentsFromWeapon) do
         local price = WeaponPrice*Config.WeaponAttachmentMultiplier[weapon][v.name]
         if not HasPedGotWeaponComponent(PlayerPedId(), GetHashKey(weapon), v.hash) then
-            print(v.name)
             table.insert(elements, {
                 label = ("<span style='color:green;'>€%s</span> - %s"):format(math.floor(price), v.label),
                 name = v.name,
@@ -286,7 +350,7 @@ function OpenSelectWeaponAttachmentMenu(weapon)
         end
     end
 
-    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "take_item", {
+    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "buy_weapon_attachment_menu", {
         title = "Buy Weapon Attachments",
         align = "top-right",
         elements = elements
