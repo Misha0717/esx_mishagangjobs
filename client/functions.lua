@@ -36,7 +36,7 @@ function OpenArmory()
             elseif selectedMenu == "buy_item" then
                 OpenBuyItemMenu()
             elseif selectedMenu == "buy_weapons" then
-
+                OpenBuyWeaponMenu()
             end
         end, function(data, menu)
             menu.close()
@@ -184,6 +184,41 @@ function OpenBuyItemMenu()
             end, function(data2, menu2)
                 menu2.close()
             end)
+        end
+    end, function(data, menu)
+        menu.close()
+    end)
+end
+
+function OpenBuyWeaponMenu()
+    local elements = {}
+
+    print(PlayerData.job.grade)
+    for k,v in pairs(Config.Weapons[CurrentGang][PlayerData.job.grade]) do
+        table.insert(elements, {
+            label = ("<span style='color:green;'>€%s</span> - %s"):format(v, ESX.GetWeaponLabel(k)),
+            weapon = k,
+            price = v
+        })
+    end
+
+    if not next(elements) then
+        table.insert(elements, {
+            label = "You cant buy items in your shop!",
+        })
+    end
+
+    table.sort(elements, function(a, b)
+        return a.price < b.price
+    end)
+
+    ESX.UI.Menu.Open("default", GetCurrentResourceName(), "take_item", {
+        title = "Buy Item",
+        align = "top-right",
+        elements = elements
+    }, function(data, menu)
+        if data.current.weapon then
+            TriggerServerEvent("esx_mishagangjobs:BuyWeaponFromArmory", CurrentGang, data.current.weapon)
         end
     end, function(data, menu)
         menu.close()
