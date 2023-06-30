@@ -23,6 +23,15 @@ RegisterNetEvent("esx:setJob", function(job)
     StartGangMarkers()
 end)
 
+RegisterNetEvent("esx:setAccountMoney", function(account)
+    for i=1, #PlayerData.accounts do
+        if PlayerData.accounts[i].name == account.name then
+            PlayerData.accounts[i].money = account.money
+            break
+        end
+    end
+end)
+
 local MarkerThreadRunning = false
 function StartGangMarkers()
     if not IsGang() or MarkerThreadRunning then

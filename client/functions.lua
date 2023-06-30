@@ -79,11 +79,19 @@ function OpenTakeItemFromArmoryMenu()
     local elements = {}
 
     for k,v in pairs(ArmoryInventory) do
-        table.insert(elements, {
-            label = ("%sx - %s"):format(v, k),
-            count = v,
-            item = k
-        })
+        if k == "money" or k == "black_money" then
+            table.insert(elements, {
+                label = ("<span style='color:green'>%sx</span> - %s"):format(v, k == "black_money" and "Black Money" or k == "money" and "Money"),
+                count = v,
+                item = k
+            })
+        else
+            table.insert(elements, {
+                label = ("%sx - %s"):format(v, k),
+                count = v,
+                item = k
+            })
+        end
     end
 
     if not next(ArmoryInventory) then
@@ -126,6 +134,28 @@ function OpenPutItemFromArmoryMenu()
             count = v,
             item = k
         })
+    end
+
+    for i=1, #PlayerData.accounts do
+        local Account = PlayerData.accounts[i]
+
+        if Account.name == "money" then
+            if Account.money > 0 then
+                table.insert(elements, {
+                    label = ("<span style='color:green'>%sx</span> - %s"):format(Account.money, "Money"),
+                    count = Account.money,
+                    item = "money"
+                })
+            end
+        elseif Account.name == "black_money" then
+            if Account.money > 0 then
+                table.insert(elements, {
+                    label = ("<span style='color:green'>%sx</span> - %s"):format(Account.money, "Black Money"),
+                    count = Account.money,
+                    item = "black_money"
+                })
+            end
+        end
     end
 
     if not next(PlayerInventory) then

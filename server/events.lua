@@ -27,7 +27,12 @@ RegisterServerEvent("esx_mishagangjobs:PutItemInArmory", function(Gang, item, co
         return
     end
 
-    xPlayer.removeInventoryItem(item, count)
+    if item == "money" or item == "black_money" then
+        xPlayer.removeAccountMoney(item, tonumber(count))
+    else
+        xPlayer.removeInventoryItem(item, tonumber(count))
+    end
+
     local currentInventory = MySQL.prepare.await('SELECT `inventory` FROM `misha_gangjobs` WHERE `gang` = ?', { Gang })
     currentInventory = json.decode(currentInventory)
     
@@ -82,7 +87,11 @@ RegisterServerEvent("esx_mishagangjobs:TakeItemFromArmory", function(Gang, item,
         return
     end
 
-    xPlayer.removeInventoryItem(item, count)
+    if item == "money" or item == "black_money" then
+        xPlayer.addAccountMoney(item, tonumber(count))
+    else
+        xPlayer.removeInventoryItem(item, tonumber(count))
+    end
     local currentInventory = MySQL.prepare.await('SELECT `inventory` FROM `misha_gangjobs` WHERE `gang` = ?', { Gang })
     currentInventory = json.decode(currentInventory)
     

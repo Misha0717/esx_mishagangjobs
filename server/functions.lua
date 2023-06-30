@@ -20,28 +20,6 @@ function GetCurrentInventoryFromGang(source, gang)
     return json.decode(inventory)
 end
 
-function GetCurrentInventoryFromGang(source, gang)
-    local inventory = MySQL.prepare.await('SELECT `weapons` FROM `misha_gangjobs` WHERE `gang` = ?', {
-        gang
-    })
-
-    if not Config.Gangs[gang] then
-        print(("^3[esx_mishagangjobs:GetWeaponsInArmory] ^8[CheatFlag]^0 %s(%s): Tried to get weapons in armory with job %s!"):format(
-            GetPlayerName(source), GetPlayerIdentifier(source, 0), gang
-        ))
-        DropPlayer(source, "esx_mishagangjobs:GetWeaponsInArmory: "..GetPlayerName(source).." Tried to exploit the armory!")
-        return
-    end
-
-    if not inventory then
-        MySQL.insert.await('INSERT INTO `misha_gangjobs` (gang) VALUES (?)', {
-            gang
-        })
-    end
-
-    return json.decode(inventory)
-end
-
 function NearMarker(source, ConfigType, maxDist)
     local coords = GetEntityCoords(GetPlayerPed(source))
 
@@ -63,6 +41,10 @@ function NearMarker(source, ConfigType, maxDist)
 end
 
 function HasItemInInventory(source, item)
+    if item == "black_money" or item == "money" then
+        return true
+    end
+    
     local xPlayer = ESX.GetPlayerFromId(source)
     local inventory = xPlayer.getInventory(true)
 
