@@ -1,4 +1,4 @@
-test
+test banaan
 
 function IsGang()
     if PlayerData.job ~= nil and Config.Gangs[PlayerData.job.name] then
