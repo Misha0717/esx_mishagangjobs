@@ -1,5 +1,3 @@
-ashjdklashkdsa
-
 function IsGang()
     if PlayerData.job ~= nil and Config.Gangs[PlayerData.job.name] then
         CurrentGang = PlayerData.job.name
